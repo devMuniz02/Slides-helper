@@ -1,0 +1,18 @@
+# Core dependencies
+python-pptx>=0.6.23  # PowerPoint file processing
+Pillow>=10.0.0  # Image processing
+openai>=1.0.0  # OpenAI-compatible API client for LM Studio
+
+# LangGraph for orchestration
+langgraph>=0.0.20
+langchain>=0.1.0
+langchain-core>=0.1.0
+
+# TTS options
+edge-tts>=6.1.0  # Lightweight TTS (primary option)
+# kokoro-82m can be added if needed
+
+# Utilities
+python-dotenv>=1.0.0  # Environment configuration
+pydantic>=2.0.0  # Data validation
+aiofiles>=23.0.0  # Async file operations
