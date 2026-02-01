@@ -9,7 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from src import SlidesOrchestrator, config
+from src import SlidesOrchestrator, SlidesHelperGUI, config
 
 
 def main():
@@ -20,6 +20,7 @@ def main():
     parser.add_argument(
         "pptx_file",
         type=str,
+        nargs="?",  # Make it optional
         help="Path to the PowerPoint (.pptx) file to process",
     )
     parser.add_argument(
@@ -33,22 +34,38 @@ def main():
         action="store_true",
         help="Stream progress updates during processing",
     )
-    
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Launch the graphical user interface for PowerPoint integration",
+    )
+
     args = parser.parse_args()
-    
+
+    if args.gui:
+        # Launch GUI mode
+        print("Launching Slides Helper GUI...")
+        gui = SlidesHelperGUI()
+        gui.run()
+        return
+
+    # File processing mode
+    if not args.pptx_file:
+        parser.error("pptx_file is required when not using --gui")
+
     # Validate input file
     pptx_path = Path(args.pptx_file)
     if not pptx_path.exists():
         print(f"Error: File not found: {pptx_path}", file=sys.stderr)
         sys.exit(1)
-    
+
     if not pptx_path.suffix.lower() == ".pptx":
         print(f"Error: File must be a .pptx file, got: {pptx_path.suffix}", file=sys.stderr)
         sys.exit(1)
-    
+
     # Set up output directory if provided
     output_dir = Path(args.output_dir) if args.output_dir else None
-    
+
     # Create orchestrator
     print("Initializing Slides-helper...")
     print(f"LM Studio URL: {config.lm_studio.base_url}")
@@ -56,13 +73,13 @@ def main():
     print(f"TTS Engine: {config.tts.engine}")
     print(f"TTS Voice: {config.tts.voice}")
     print()
-    
+
     orchestrator = SlidesOrchestrator(output_dir=output_dir)
-    
+
     # Process the presentation
     print(f"Processing presentation: {pptx_path.name}")
     print("-" * 60)
-    
+
     if args.stream:
         # Streaming mode
         for state_update in orchestrator.process_presentation_streaming(str(pptx_path)):
@@ -78,7 +95,7 @@ def main():
     else:
         # Standard mode
         result = orchestrator.process_presentation(str(pptx_path))
-        
+
         # Print results
         print()
         print("=" * 60)

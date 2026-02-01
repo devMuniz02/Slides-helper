@@ -10,20 +10,108 @@ A local-first, multimodal AI agent that transforms PowerPoint slides into narrat
 - 🔄 **LangGraph Orchestration**: Modular workflow management for complex processing pipelines
 - 💻 **Local-First**: All processing happens on your machine - no cloud dependencies
 - ⚡ **Efficient**: Optimized for 32GB RAM and 12GB VRAM systems
+- 🖥️ **PowerPoint Integration**: Real-time connection to active PowerPoint presentations
+- 🎛️ **Graphical Interface**: Modern GUI for live slide monitoring and analysis
+- 📊 **Live Monitoring**: Automatically tracks current slide changes during presentations
+- 🎤 **TTS with Progressive Subtitles**: Generate summaries and speak them with synchronized, sentence-by-sentence subtitle overlay
+
+## Prerequisites
+
+- **Python 3.8+**
+- **LM Studio** running locally with a vision-capable model (e.g., Qwen2.5-VL)
+- **PowerPoint** (for GUI integration features)
+- **Windows** (required for PowerPoint COM automation)
+
+## Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd slides-helper
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Set up LM Studio:**
+   - Download and install [LM Studio](https://lmstudio.ai/)
+   - Download a vision model (e.g., Qwen2.5-VL)
+   - Start LM Studio and load the model
+   - Ensure LM Studio is running on `http://localhost:1234` (default)
+
+## Configuration
+
+Create a `.env` file in the project root (optional, defaults will work):
+
+```env
+# LM Studio Configuration
+LM_STUDIO_BASE_URL=http://localhost:1234/v1
+VISION_MODEL_NAME=Qwen2.5-VL
+
+# TTS Configuration
+TTS_ENGINE=edge-tts
+TTS_VOICE=en-US-AriaNeural
+
+# Processing Configuration
+MAX_SLIDES_PER_BATCH=5
+IMAGE_QUALITY=high
+OUTPUT_DIR=./output
+TEMP_DIR=./temp
+```
+
+## Usage
+
+### Command Line Interface
+
+Process a PowerPoint file:
+```bash
+python main.py path/to/your/presentation.pptx
+```
+
+With options:
+```bash
+python main.py path/to/presentation.pptx --output-dir ./my_output --stream
+```
+
+Available options:
+- `--output-dir`: Specify output directory (default: ./output)
+- `--stream`: Enable streaming progress updates
+- `--gui`: Launch graphical interface instead
+
+### Graphical User Interface
+
+Launch the GUI for real-time PowerPoint integration:
+```bash
+python gui_launcher.py
+```
+
+Or from main script:
+```bash
+python main.py --gui
+```
+
+The GUI provides:
+- Live slide monitoring during presentations
+- Real-time analysis and narration
+- Visual feedback and controls
 
 ## Architecture
 
 ```
-┌─────────────────┐
-│  PowerPoint     │
-│  (.pptx file)   │
-└────────┬────────┘
-         │
-         v
+┌─────────────────┐    ┌──────────────────────┐
+│  PowerPoint     │    │   PowerPoint GUI     │
+│  (.pptx file)   │    │   (Live Integration) │
+└────────┬────────┘    └──────────┬───────────┘
+         │                       │
+         └───────────────────────┼───────────────────────┐
+                                 v                       v
 ┌─────────────────────────────────────────────────────────┐
 │              Slide Processor Module                      │
 │  • Extract text, images, speaker notes                  │
 │  • Parse slide structure and metadata                   │
+│  • Real-time slide extraction from active presentations │
 └────────────────┬────────────────────────────────────────┘
                  │
                  v
@@ -43,286 +131,61 @@ A local-first, multimodal AI agent that transforms PowerPoint slides into narrat
                  │
                  v
 ┌─────────────────────────────────────────────────────────┐
-│          LangGraph Orchestrator                          │
-│  • Coordinate workflow                                   │
-│  • Manage state and dependencies                        │
-│  • Stream progress updates                              │
+│            Orchestrator Module                           │
+│  • LangGraph workflow management                        │
+│  • Coordinate all processing steps                      │
+│  • Handle errors and state management                   │
 └─────────────────────────────────────────────────────────┘
 ```
-
-## Prerequisites
-
-### Hardware Requirements
-- **RAM**: 32GB recommended
-- **VRAM**: 12GB recommended for Vision model
-- **Storage**: 10GB+ for models and dependencies
-
-### Software Requirements
-- **Python**: 3.9 or higher
-- **LM Studio**: Running locally with Vision model loaded
-  - Download from: https://lmstudio.ai/
-  - Load a Vision model (e.g., Qwen2.5-VL)
-  - Ensure server is running at `http://localhost:1234/v1`
-
-## Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/devMuniz02/Slides-helper.git
-   cd Slides-helper
-   ```
-
-2. **Create a virtual environment** (recommended)
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configure environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your settings if needed
-   ```
-
-## Usage
-
-### Quick Start
-
-Process a PowerPoint presentation:
-
-```bash
-python main.py presentation.pptx
-```
-
-With custom output directory:
-
-```bash
-python main.py presentation.pptx --output-dir ./my_output
-```
-
-Stream progress updates:
-
-```bash
-python main.py presentation.pptx --stream
-```
-
-### Modular Usage
-
-#### 1. Slide Processor Only
-
-```python
-from src.slide_processor import SlideProcessor
-
-# Initialize processor
-processor = SlideProcessor("presentation.pptx")
-
-# Get presentation info
-info = processor.get_presentation_info()
-print(f"Total slides: {info['total_slides']}")
-
-# Process all slides
-slides = processor.process_all_slides()
-
-# Process specific slide
-slide = processor.process_slide(0)
-print(f"Title: {slide.title}")
-print(f"Content: {slide.text_content}")
-print(f"Images: {len(slide.images)}")
-```
-
-#### 2. Vision Analysis
-
-```python
-from src.slide_processor import SlideProcessor
-from src.vision_analyzer import VisionAnalyzer
-
-processor = SlideProcessor("presentation.pptx")
-analyzer = VisionAnalyzer()
-
-slide = processor.process_slide(0)
-analysis = analyzer.analyze_slide_content(slide)
-
-print(f"Visual analysis: {analysis['visual_analysis']}")
-print(f"Key points: {analysis['key_points']}")
-```
-
-#### 3. Text-to-Speech
-
-```python
-from src.tts_engine import TTSEngineFactory
-from pathlib import Path
-
-tts = TTSEngineFactory.create_engine()
-
-# Generate single audio file
-text = "Welcome to slide 1"
-output = Path("./output/slide1.mp3")
-tts.generate_speech(text, output)
-
-# Generate multiple audio files
-texts = ["Slide 1", "Slide 2", "Slide 3"]
-audio_files = tts.generate_speech_batch(
-    texts,
-    Path("./output"),
-    filename_prefix="narration"
-)
-```
-
-#### 4. Full Orchestration
-
-```python
-from src.orchestrator import SlidesOrchestrator
-
-orchestrator = SlidesOrchestrator()
-result = orchestrator.process_presentation("presentation.pptx")
-
-if result.success:
-    print(f"Generated {len(result.audio_files)} audio files")
-    print(f"Output: {result.output_dir}")
-else:
-    print(f"Error: {result.error}")
-```
-
-## Examples
-
-The `examples/` directory contains standalone scripts demonstrating each module:
-
-- `basic_processor.py` - Slide extraction and processing
-- `vision_analysis.py` - Vision model integration
-- `tts_demo.py` - Text-to-speech generation
-- `full_workflow.py` - Complete orchestrated workflow
-
-Run any example:
-```bash
-python examples/basic_processor.py
-```
-
-## Configuration
-
-Edit `.env` to customize settings:
-
-```env
-# LM Studio Configuration
-LM_STUDIO_BASE_URL=http://localhost:1234/v1
-VISION_MODEL_NAME=Qwen2.5-VL
-
-# TTS Configuration
-TTS_ENGINE=edge-tts
-TTS_VOICE=en-US-AriaNeural
-
-# Output Configuration
-OUTPUT_DIR=./output
-TEMP_DIR=./temp
-
-# Processing Configuration
-MAX_SLIDES_PER_BATCH=5
-IMAGE_QUALITY=high  # Options: high, medium, low
-```
-
-## Module Documentation
-
-### Slide Processor
-Located in `src/slide_processor/`
-
-**Key Classes:**
-- `SlideProcessor`: Main class for processing PowerPoint files
-- `SlideContent`: Data class representing slide content
-
-**Features:**
-- Extract text from all shapes (including tables, groups)
-- Extract embedded images
-- Parse speaker notes
-- Retrieve slide metadata
-
-### Vision Analyzer
-Located in `src/vision_analyzer/`
-
-**Key Classes:**
-- `VisionAnalyzer`: Integrates with LM Studio's vision model
-
-**Features:**
-- Analyze slide images using Vision models
-- Generate visual descriptions
-- Extract key points from content
-- Create narration-ready summaries
-
-### TTS Engine
-Located in `src/tts_engine/`
-
-**Key Classes:**
-- `TTSEngine`: Text-to-speech using edge-tts
-- `TTSEngineFactory`: Factory for creating TTS engines
-
-**Features:**
-- Convert text to natural-sounding speech
-- Multiple voice options
-- Batch processing support
-- Async operations
-
-### Orchestrator
-Located in `src/orchestrator/`
-
-**Key Classes:**
-- `SlidesOrchestrator`: LangGraph-based workflow orchestration
-- `AgentState`: State management for the workflow
-- `ProcessingResult`: Result container
-
-**Features:**
-- Coordinate multi-step workflows
-- State management
-- Error handling
-- Progress streaming
 
 ## Project Structure
 
 ```
-Slides-helper/
-├── src/
-│   ├── slide_processor/    # PowerPoint processing
-│   ├── vision_analyzer/    # Vision model integration
-│   ├── tts_engine/         # Text-to-speech
-│   ├── orchestrator/       # LangGraph workflow
-│   └── utils/              # Shared utilities
-├── examples/               # Example scripts
-├── main.py                 # CLI entry point
-├── requirements.txt        # Dependencies
-├── .env.example           # Configuration template
-└── README.md              # This file
+slides-helper/
+├── main.py                 # Command-line interface
+├── gui_launcher.py         # GUI launcher script
+├── requirements.txt        # Python dependencies
+└── src/
+    ├── gui/                # Graphical user interface
+    ├── orchestrator/       # LangGraph orchestration
+    ├── powerpoint_connector/ # PowerPoint integration
+    ├── slide_processor/    # Slide content extraction
+    ├── tts_engine/         # Text-to-speech synthesis
+    ├── utils/              # Configuration and utilities
+    └── vision_analyzer/    # AI vision analysis
 ```
 
 ## Troubleshooting
 
-### LM Studio Connection Issues
-- Ensure LM Studio is running: Check `http://localhost:1234/v1`
-- Verify the Vision model is loaded in LM Studio
-- Check firewall settings if connection fails
+### Common Issues
 
-### Memory Issues
-- Reduce `IMAGE_QUALITY` in `.env` (use "medium" or "low")
-- Process fewer slides at once by adjusting `MAX_SLIDES_PER_BATCH`
-- Ensure no other heavy applications are running
+1. **LM Studio Connection Failed**
+   - Ensure LM Studio is running and accessible at `http://localhost:1234`
+   - Check that the vision model is loaded and active
 
-### TTS Issues
-- edge-tts requires internet for first-time voice downloads
-- Check available voices with: `edge-tts --list-voices`
-- Try different voices if one doesn't work
+2. **PowerPoint Integration Issues**
+   - Ensure PowerPoint is installed and running
+   - Run as administrator if COM automation fails
+
+3. **TTS Engine Problems**
+   - Verify internet connection for edge-tts
+   - Check voice availability with `edge-tts --list-voices`
+
+### Performance Optimization
+
+- Use models optimized for your hardware (12GB VRAM recommended)
+- Process fewer slides per batch for lower-end systems
+- Enable streaming mode for progress feedback
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
 ## License
 
-See LICENSE file for details.
-
-## Acknowledgments
-
-- [LangGraph](https://github.com/langchain-ai/langgraph) for orchestration
-- [LM Studio](https://lmstudio.ai/) for local LLM serving
-- [edge-tts](https://github.com/rany2/edge-tts) for text-to-speech
-- [python-pptx](https://python-pptx.readthedocs.io/) for PowerPoint processing
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.</content>
+<parameter name="filePath">c:\Users\emman\Desktop\PROYECTOS_VS_CODE\PRUEBAS_DE_PYTHON\Slides-helper\README.md

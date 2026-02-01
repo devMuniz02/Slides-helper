@@ -12,7 +12,7 @@ from PIL import Image
 
 from ..utils.config import config
 from ..utils.image_utils import image_to_base64
-from ..slide_processor import SlideContent
+from ..slide_processor.processor import SlideContent
 
 
 class VisionAnalyzer:

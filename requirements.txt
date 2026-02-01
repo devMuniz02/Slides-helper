@@ -7,6 +7,7 @@ openai>=1.0.0  # OpenAI-compatible API client for LM Studio
 langgraph>=0.0.20
 langchain>=0.1.0
 langchain-core>=0.1.0
+langchain-openai>=0.1.0  # OpenAI integration for LangChain
 
 # TTS options
 edge-tts>=6.1.0  # Lightweight TTS (primary option)
@@ -16,3 +17,9 @@ edge-tts>=6.1.0  # Lightweight TTS (primary option)
 python-dotenv>=1.0.0  # Environment configuration
 pydantic>=2.0.0  # Data validation
 aiofiles>=23.0.0  # Async file operations
+
+# PowerPoint integration and GUI
+pywin32>=306  # Windows COM automation for PowerPoint
+pygetwindow>=0.0.9  # Window management
+customtkinter>=5.2.0  # Modern tkinter GUI
+Pillow>=10.0.0  # Already included, for GUI images
