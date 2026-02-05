@@ -2,6 +2,8 @@
 
 A local-first, multimodal AI agent that transforms PowerPoint slides into narrated experiences. Built with LangGraph & LM Studio to analyze visuals, generate executive summaries, and provide real-time presentation assistance.
 
+![Slides-helper Demo](assets/SlidesRAG.gif)
+
 ## Features
 
 - 🔍 **Slide Processing**: Extract text, images, and metadata from PowerPoint (.pptx) files
@@ -180,6 +182,15 @@ The GUI provides:
 - Visual feedback and controls
 
 ### RAG (Retrieval-Augmented Generation) System
+
+The RAG system combines the power of information retrieval with AI language generation to provide intelligent question-answering over your presentations. Instead of just searching for keywords, it understands the semantic meaning of your questions, retrieves the most relevant content from your slides (including both text and visual information), and generates natural, contextual answers backed by source citations.
+
+**How it works:**
+1. **Ingestion**: Your PowerPoint presentations are processed, with text extracted and images analyzed by vision models
+2. **Embedding**: Content is converted into semantic vectors and stored in a local ChromaDB database
+3. **Retrieval**: When you ask a question, the system finds the most relevant slides and content
+4. **Generation**: A local language model synthesizes a comprehensive answer using the retrieved context
+5. **Citation**: Every answer includes references to the specific slides where the information was found
 
 Ask questions about your PowerPoint presentations using natural language:
 
