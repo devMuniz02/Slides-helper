@@ -14,7 +14,6 @@ edge-tts>=6.1.0  # Lightweight TTS (primary option)
 # kokoro-82m can be added if needed
 
 # Utilities
-python-dotenv>=1.0.0  # Environment configuration
 pydantic>=2.0.0  # Data validation
 aiofiles>=23.0.0  # Async file operations
 
@@ -23,3 +22,13 @@ pywin32>=306  # Windows COM automation for PowerPoint
 pygetwindow>=0.0.9  # Window management
 customtkinter>=5.2.0  # Modern tkinter GUI
 Pillow>=10.0.0  # Already included, for GUI images
+
+# RAG dependencies
+chromadb>=0.4.0  # Vector database for embeddings
+sentence-transformers>=2.2.0  # Local embeddings (fallback)
+faiss-cpu>=1.7.0  # Vector search (alternative to ChromaDB)
+fastapi>=0.104.0  # Async web framework for chat interface
+uvicorn>=0.24.0  # ASGI server
+jinja2>=3.1.0  # Template engine for HTML
+websockets>=12.0  # WebSocket support for real-time chat
+asyncio  # Built-in async support

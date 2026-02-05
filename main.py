@@ -39,6 +39,11 @@ def main():
         action="store_true",
         help="Launch the graphical user interface for PowerPoint integration",
     )
+    parser.add_argument(
+        "--rag",
+        action="store_true",
+        help="Launch the RAG (Retrieval-Augmented Generation) system for PowerPoint Q&A",
+    )
 
     args = parser.parse_args()
 
@@ -47,6 +52,19 @@ def main():
         print("Launching Slides Helper GUI...")
         gui = SlidesHelperGUI()
         gui.run()
+        return
+
+    if args.rag:
+        # Launch RAG mode
+        print("Launching RAG System...")
+        import subprocess
+        import sys
+        try:
+            # Run the RAG system with chat interface
+            subprocess.run([sys.executable, "rag_system.py", "--chat"], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error launching RAG system: {e}")
+            sys.exit(1)
         return
 
     # File processing mode

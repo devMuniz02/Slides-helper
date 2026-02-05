@@ -16,12 +16,6 @@ from ..tts_engine import TTSEngineFactory
 from ..utils.config import config
 
 import os
-import dotenv
-
-# Load environment variables from .env file (or .env.example if .env doesn't exist)
-dotenv.load_dotenv()
-
-ENV = os.environ
 
 class AgentState(TypedDict):
     """State for the LangGraph agent."""
@@ -73,7 +67,7 @@ class SlidesOrchestrator:
         self.output_dir = output_dir or config.processing.output_dir
         self.vision_analyzer = VisionAnalyzer()
         self.tts_engine = TTSEngineFactory.create_engine(engine_type="edge-tts")
-        self.tts_engine.voice = ENV.get("TTS_VOICE", "es-MX-DaliaNeural")
+        self.tts_engine.voice = config.tts.voice
         
         # Build the workflow graph
         self.workflow = self._build_workflow()

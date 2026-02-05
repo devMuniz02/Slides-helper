@@ -209,6 +209,9 @@ __marimo__/
 # Slides-helper specific
 output/
 temp/
+rag_db/
+uploads/
+list_files.py
 *.pptx
 *.mp3
 *.wav

@@ -41,24 +41,106 @@ A local-first, multimodal AI agent that transforms PowerPoint slides into narrat
    - Start LM Studio and load the model
    - Ensure LM Studio is running on `http://localhost:1234` (default)
 
+## Project Structure
+
+```
+slides-helper/
+├── config/                 # Configuration files
+│   └── rag_config.json     # RAG system model configuration
+├── docs/                   # Documentation
+│   └── RAG_CONFIG_README.md # RAG configuration guide
+├── output/                 # Output files and results
+├── rag_db/                 # RAG database and extracted data
+│   ├── chroma_db/          # Vector database storage
+│   └── *_extracted.json    # Extracted slide data
+├── src/                    # Source code
+│   ├── gui/                # Graphical user interface
+│   ├── orchestrator/       # Main processing orchestration
+│   ├── powerpoint_connector/ # PowerPoint integration
+│   ├── rag_system/         # RAG system components
+│   ├── slide_processor/    # Slide text/image extraction
+│   ├── tts_engine/         # Text-to-speech functionality
+│   ├── utils/              # Utility functions and configuration
+│   └── vision_analyzer/    # Image analysis with vision models
+├── temp/                   # Temporary files
+├── templates/              # HTML templates for web interface
+│   ├── chat.html
+│   └── workflow.html
+├── uploads/                # Uploaded files
+├── gui_launcher.py         # GUI application entry point
+├── list_files.py           # File listing utility
+├── main.py                 # CLI application entry point
+├── rag_system.py           # RAG system entry point
+├── README.md               # This file
+├── requirements.txt        # Python dependencies
+└── LICENSE                 # License information
+```
+
+## Testing with Local Files
+
+**Note:** This repository does not include example PowerPoint files due to size constraints.
+
+To test the system:
+
+1. **Place your .pptx files** in the root directory of the project
+2. **Use the GUI** to select files from your local system
+3. **Or use the command line** with paths to your presentations
+
+Example:
+```bash
+# Place your presentation in the root directory
+cp <path-to-your-pptx-file> .
+
+# Then process it
+python main.py <pptx-file>
+
+# Or use the GUI to browse and select files
+python gui_launcher.py
+```
+
 ## Configuration
 
-Create a `.env` file in the project root (optional, defaults will work):
+The application uses JSON-based configuration stored in `config/rag_config.json`. You can modify this file to customize settings. The application will use sensible defaults if the config file doesn't exist.
 
-```env
-# LM Studio Configuration
-LM_STUDIO_BASE_URL=http://localhost:1234/v1
-VISION_MODEL_NAME=Qwen2.5-VL
+Example `config/rag_config.json`:
 
-# TTS Configuration
-TTS_ENGINE=edge-tts
-TTS_VOICE=en-US-AriaNeural
-
-# Processing Configuration
-MAX_SLIDES_PER_BATCH=5
-IMAGE_QUALITY=high
-OUTPUT_DIR=./output
-TEMP_DIR=./temp
+```json
+{
+  "models": {
+    "vision": "qwen/qwen2.5-vl-7b",
+    "text_generation": "qwen2.5-7b-instruct",
+    "embedding": "local"
+  },
+  "lm_studio": {
+    "base_url": "http://localhost:1234/v1",
+    "vision_model_name": "Qwen2.5-VL",
+    "model_name": "qwen2.5-7b-instruct",
+    "embedding_model_name": "text-embedding-ada-002"
+  },
+  "tts": {
+    "engine": "edge-tts",
+    "voice": "es-MX-DaliaNeural",
+    "rate": "+0%",
+    "volume": "+0%"
+  },
+  "processing": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "max_slides_per_batch": 5,
+    "image_quality": "high",
+    "output_dir": "./output",
+    "temp_dir": "./temp"
+  },
+  "database": {
+    "collection_name": "slides_collection",
+    "persist_directory": "./rag_db"
+  },
+  "web_interface": {
+    "host": "localhost",
+    "port": 8000,
+    "reload": true
+  }
+}
 ```
 
 ## Usage
@@ -67,12 +149,12 @@ TEMP_DIR=./temp
 
 Process a PowerPoint file:
 ```bash
-python main.py path/to/your/presentation.pptx
+python main.py <path-to-pptx-file>
 ```
 
 With options:
 ```bash
-python main.py path/to/presentation.pptx --output-dir ./my_output --stream
+python main.py <path-to-pptx-file> --output-dir ./my_output --stream
 ```
 
 Available options:
@@ -96,6 +178,61 @@ The GUI provides:
 - Live slide monitoring during presentations
 - Real-time analysis and narration
 - Visual feedback and controls
+
+### RAG (Retrieval-Augmented Generation) System
+
+Ask questions about your PowerPoint presentations using natural language:
+
+**Process presentations for Q&A:**
+```bash
+python rag_system.py --pptx <path-to-pptx-file>
+```
+
+**Start the interactive chat interface:**
+```bash
+python rag_system.py --chat
+```
+
+**Or launch from main script:**
+```bash
+python main.py --rag
+```
+
+**RAG Features:**
+- 🔍 **Intelligent Search**: Find relevant information across all slides
+- 🖼️ **Multimodal Understanding**: Search through both text and image content
+- 📍 **Source Citations**: Always shows which presentation and slide the information came from
+- 💬 **Interactive Chat**: Web-based interface with real-time responses
+- 🔄 **Async Processing**: Fluid responses with progressive token streaming
+- 🗄️ **Vector Database**: Persistent storage using ChromaDB
+- 🎯 **Contextual Answers**: AI-generated responses based on retrieved content
+
+**RAG Configuration:**
+The RAG system uses `config/rag_config.json` for model configuration. Copy and modify this file to customize model settings:
+
+```json
+{
+  "models": {
+    "vision": "qwen/qwen2.5-vl-7b",
+    "text_generation": "qwen2.5-7b-instruct",
+    "embedding": "local"
+  },
+  "lm_studio": {
+    "base_url": "http://localhost:1234/v1",
+    "vision_model_name": "qwen/qwen2.5-vl-7b",
+    "model_name": "qwen2.5-7b-instruct",
+    "embedding_model_name": "text-embedding-ada-002"
+  }
+}
+```
+
+See `docs/RAG_CONFIG_README.md` for detailed configuration options.
+
+**Example queries:**
+- "What are the main benefits of our product?"
+- "Show me the quarterly sales figures"
+- "Explain the technical architecture diagram"
+- "What were the key discussion points from last month's meeting?"
 
 ## Architecture
 
@@ -138,23 +275,6 @@ The GUI provides:
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Project Structure
-
-```
-slides-helper/
-├── main.py                 # Command-line interface
-├── gui_launcher.py         # GUI launcher script
-├── requirements.txt        # Python dependencies
-└── src/
-    ├── gui/                # Graphical user interface
-    ├── orchestrator/       # LangGraph orchestration
-    ├── powerpoint_connector/ # PowerPoint integration
-    ├── slide_processor/    # Slide content extraction
-    ├── tts_engine/         # Text-to-speech synthesis
-    ├── utils/              # Configuration and utilities
-    └── vision_analyzer/    # AI vision analysis
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -187,5 +307,4 @@ slides-helper/
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.</content>
-<parameter name="filePath">c:\Users\emman\Desktop\PROYECTOS_VS_CODE\PRUEBAS_DE_PYTHON\Slides-helper\README.md
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -1,0 +1,36 @@
+{
+  "models": {
+    "vision": "qwen/qwen2.5-vl-7b",
+    "text_generation": "qwen2.5-7b-instruct",
+    "embedding": "local"
+  },
+  "lm_studio": {
+    "base_url": "http://localhost:1234/v1",
+    "vision_model_name": "Qwen2.5-VL",
+    "model_name": "qwen2.5-7b-instruct",
+    "embedding_model_name": "text-embedding-ada-002"
+  },
+  "tts": {
+    "engine": "edge-tts",
+    "voice": "es-MX-DaliaNeural",
+    "rate": "+0%",
+    "volume": "+0%"
+  },
+  "processing": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "max_slides_per_batch": 5,
+    "image_quality": "high",
+    "output_dir": "./output",
+    "temp_dir": "./temp"
+  },
+  "database": {
+    "collection_name": "slides_collection",
+    "persist_directory": "./rag_db"
+  },
+  "web_interface": {
+    "host": "localhost",
+    "port": 8000,
+    "reload": true
+  }
+}

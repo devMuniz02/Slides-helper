@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerPoint RAG Workflow</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .workflow {
+            display: flex;
+            min-height: 600px;
+        }
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        .step {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+        }
+        .step.active {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+        .step.completed {
+            border-color: #28a745;
+            background: #f8fff8;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .pptx-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .pptx-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .pptx-item:hover {
+            background: #f8f9fa;
+        }
+        .pptx-item.selected {
+            background: #007bff;
+            color: white;
+        }
+        .model-config {
+            margin: 15px 0;
+        }
+        .model-config select, .model-config input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .chat-container {
+            display: none;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .message.user {
+            background: #007bff;
+            color: white;
+            text-align: right;
+        }
+        .message.assistant {
+            background: white;
+            border: 1px solid #dee2e6;
+        }
+        .sources {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .source-item {
+            margin-bottom: 5px;
+            padding: 5px;
+            background: white;
+            border-radius: 3px;
+        }
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        #messageInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #007bff;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PowerPoint RAG Workflow</h1>
+            <p>Step-by-step PowerPoint processing and Q&A system</p>
+        </div>
+
+        <div class="workflow">
+            <div class="sidebar">
+                <h3>Available PPTX Files</h3>
+                <div class="pptx-list" id="pptxList">
+                    {% for pptx in pptx_files %}
+                    <div class="pptx-item" data-path="{{ pptx.path }}">
+                        📄 {{ pptx.name }}<br>
+                        <small>{{ (pptx.size / 1024)|round(1) }} KB</small>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <h3>Model Configuration</h3>
+                <div class="model-config">
+                    <label>Vision Model:</label>
+                    <select id="visionModel">
+                        <option value="Qwen2.5-VL">Qwen2.5-VL</option>
+                        <option value="LLaVA-7B">LLaVA-7B</option>
+                        <option value="">None (skip vision)</option>
+                    </select>
+                </div>
+                <div class="model-config">
+                    <label>Text Generation:</label>
+                    <select id="textModel">
+                        <option value="Qwen2.5-0.5B-Instruct">Qwen2.5-0.5B-Instruct</option>
+                        <option value="Qwen2.5-7B-Instruct">Qwen2.5-7B-Instruct</option>
+                        <option value="Llama-3-8B-Instruct">Llama-3-8B-Instruct</option>
+                    </select>
+                </div>
+                <div class="model-config">
+                    <label>Embeddings:</label>
+                    <select id="embeddingModel">
+                        <option value="local">Local (sentence-transformers)</option>
+                        <option value="text-embedding-ada-002">LM Studio (ada-002)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="updateModelsBtn">Update Models</button>
+            </div>
+
+            <div class="main-content">
+                <!-- Step 1: Select PPTX -->
+                <div class="step" id="step1">
+                    <h3>Step 1: Select Presentation</h3>
+                    <p>Choose a PowerPoint file from the sidebar to process.</p>
+                    <div id="selectedPptxStatus"></div>
+                </div>
+
+                <!-- Step 2: Extract Information -->
+                <div class="step" id="step2">
+                    <h3>Step 2: Extract Information</h3>
+                    <p>Extract text content and analyze images from the presentation.</p>
+                    <button class="btn btn-primary" id="extractBtn">Extract Information</button>
+                    <div id="extractStatus"></div>
+                    <div id="extractResults"></div>
+                </div>
+
+                <!-- Step 3: Create Embeddings -->
+                <div class="step" id="step3">
+                    <h3>Step 3: Create Embeddings</h3>
+                    <p>Create vector embeddings for semantic search.</p>
+                    <button class="btn btn-primary" id="embedBtn">Create Embeddings</button>
+                    <div id="embedStatus"></div>
+                </div>
+
+                <!-- Step 4: Start Chat -->
+                <div class="step" id="step4">
+                    <h3>Step 4: Interactive Chat</h3>
+                    <p>Ask questions about your presentation content.</p>
+                    <button class="btn btn-success" id="startChatBtn">Start Chat</button>
+                    <div id="chatStatus"></div>
+                </div>
+
+                <!-- Chat Interface -->
+                <div class="chat-container" id="chatContainer">
+                    <h3>Chat with your Presentation</h3>
+                    <div class="chat-messages" id="messages">
+                        <div class="message assistant">
+                            Hello! I'm ready to answer questions about your presentation.
+                            Ask me anything about the content!
+                        </div>
+                    </div>
+
+                    <div class="chat-input">
+                        <input type="text" id="messageInput" placeholder="Ask a question..." />
+                        <button class="btn btn-primary" id="sendButton">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPptx = null;
+        let chatActive = false;
+        const ws = new WebSocket('ws://localhost:8000/ws/chat');
+
+        // Initialize
+        updateStepStates();
+
+        // PPTX selection
+        document.getElementById('pptxList').addEventListener('click', function(e) {
+            if (e.target.classList.contains('pptx-item')) {
+                const items = document.querySelectorAll('.pptx-item');
+                items.forEach(item => item.classList.remove('selected'));
+                e.target.classList.add('selected');
+                selectedPptx = e.target.dataset.path;
+                selectPptx(selectedPptx);
+            }
+        });
+
+        // Model updates
+        document.getElementById('updateModelsBtn').addEventListener('click', updateModels);
+
+        // Step buttons
+        document.getElementById('extractBtn').addEventListener('click', extractInfo);
+        document.getElementById('embedBtn').addEventListener('click', createEmbeddings);
+        document.getElementById('startChatBtn').addEventListener('click', startChat);
+
+        // Chat
+        document.getElementById('sendButton').addEventListener('click', sendMessage);
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // WebSocket
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            handleWebSocketMessage(data);
+        };
+
+        function selectPptx(pptxPath) {
+            fetch('/select-pptx', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pptx_path: pptxPath})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('selectedPptxStatus').innerHTML =
+                        `<div class="status success">Selected: ${data.pptx}</div>`;
+                    updateStepStates();
+                } else {
+                    showError('step1', data.error);
+                }
+            });
+        }
+
+        function updateModels() {
+            const models = {
+                vision: document.getElementById('visionModel').value,
+                text_generation: document.getElementById('textModel').value,
+                embedding: document.getElementById('embeddingModel').value
+            };
+
+            fetch('/update-models', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(models)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Models updated successfully!');
+                }
+            });
+        }
+
+        function extractInfo() {
+            document.getElementById('extractBtn').disabled = true;
+            document.getElementById('extractStatus').innerHTML = '<div class="status info">Extracting information...</div>';
+
+            fetch('/extract-info', {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('extractBtn').disabled = false;
+                if (data.success) {
+                    document.getElementById('extractStatus').innerHTML =
+                        `<div class="status success">Extracted ${data.slides_processed} slides</div>`;
+                    document.getElementById('extractResults').innerHTML =
+                        `<details><summary>View extracted data</summary><pre>${JSON.stringify(data.slides, null, 2)}</pre></details>`;
+                    updateStepStates();
+                } else {
+                    document.getElementById('extractStatus').innerHTML =
+                        `<div class="status error">Error: ${data.error}</div>`;
+                }
+            });
+        }
+
+        function createEmbeddings() {
+            document.getElementById('embedBtn').disabled = true;
+            document.getElementById('embedStatus').innerHTML = '<div class="status info">Creating embeddings...</div>';
+
+            fetch('/create-embeddings', {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('embedBtn').disabled = false;
+                if (data.success) {
+                    document.getElementById('embedStatus').innerHTML =
+                        `<div class="status success">Created embeddings for ${data.slides_embedded} slides</div>`;
+                    updateStepStates();
+                } else {
+                    document.getElementById('embedStatus').innerHTML =
+                        `<div class="status error">Error: ${data.error}</div>`;
+                }
+            });
+        }
+
+        function startChat() {
+            fetch('/start-chat', {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    chatActive = true;
+                    document.getElementById('chatContainer').style.display = 'block';
+                    document.getElementById('chatStatus').innerHTML =
+                        '<div class="status success">Chat started! Ask questions below.</div>';
+                    updateStepStates();
+                } else {
+                    document.getElementById('chatStatus').innerHTML =
+                        `<div class="status error">Error: ${data.error}</div>`;
+                }
+            });
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message || !chatActive) return;
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+
+            // Send to server
+            ws.send(JSON.stringify({query: message}));
+        }
+
+        function handleWebSocketMessage(data) {
+            if (data.type === 'token') {
+                // Streaming token
+                updateLastAssistantMessage(data.content);
+            } else if (data.type === 'answer_complete') {
+                // Answer complete
+                setLastAssistantMessage(data.full_answer);
+            } else if (data.type === 'sources') {
+                // Show sources
+                showSources(data.sources);
+            } else if (data.type === 'error') {
+                addMessage('assistant', `❌ ${data.content}`);
+            }
+        }
+
+        function addMessage(sender, content) {
+            const messages = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.innerHTML = content;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function updateLastAssistantMessage(token) {
+            const messages = document.getElementById('messages');
+            let lastMessage = messages.lastElementChild;
+            if (!lastMessage || !lastMessage.classList.contains('assistant')) {
+                lastMessage = document.createElement('div');
+                lastMessage.className = 'message assistant';
+                messages.appendChild(lastMessage);
+            }
+            lastMessage.innerHTML += token;
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function setLastAssistantMessage(content) {
+            const messages = document.getElementById('messages');
+            let lastMessage = messages.lastElementChild;
+            if (!lastMessage || !lastMessage.classList.contains('assistant')) {
+                lastMessage = document.createElement('div');
+                lastMessage.className = 'message assistant';
+                messages.appendChild(lastMessage);
+            }
+            lastMessage.innerHTML = content;
+        }
+
+        function showSources(sources) {
+            const messages = document.getElementById('messages');
+            let sourcesDiv = document.createElement('div');
+            sourcesDiv.className = 'sources';
+            sourcesDiv.innerHTML = '<strong>Sources:</strong><br>' +
+                sources.map(s => `<div class="source-item">📄 ${s.filename}, Slide ${s.slide} (${s.type}) - Similarity: ${(s.similarity * 100).toFixed(1)}%</div>`).join('');
+            messages.appendChild(sourcesDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function updateStepStates() {
+            // Update step visual states based on workflow state
+            const steps = document.querySelectorAll('.step');
+            steps.forEach(step => step.classList.remove('active', 'completed'));
+
+            if (selectedPptx) {
+                document.getElementById('step1').classList.add('completed');
+                document.getElementById('step2').classList.add('active');
+            }
+
+            // Add more logic based on workflow state
+        }
+
+        function showError(stepId, error) {
+            document.getElementById(`${stepId}Status`).innerHTML =
+                `<div class="status error">Error: ${error}</div>`;
+        }
+    </script>
+</body>
+</html>

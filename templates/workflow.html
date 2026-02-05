@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerPoint RAG System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .tab.active {
+            background: white;
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
+        }
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+        .tab-content {
+            display: none;
+            min-height: 600px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .workflow-content {
+            display: flex;
+        }
+        .sidebar {
+            width: 350px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .pptx-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .pptx-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .pptx-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+        }
+        .pptx-card.selected {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+        .pptx-card.extracted {
+            border-color: #ffc107;
+            background: #fffbf0;
+        }
+        .pptx-card.embedded {
+            border-color: #28a745;
+            background: #f8fff8;
+        }
+        .pptx-card.rag-ready {
+            border-color: #28a745;
+            background: #f8fff8;
+        }
+        .pptx-card.missing-embeddings {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+        .pptx-card.needs-processing {
+            border-color: #ffc107;
+            background: #fffbf0;
+        }
+        .pptx-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        .pptx-info {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+        .pptx-status {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-badge.extracted {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-badge.embedded {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge.rag-ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge.missing-embeddings {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-badge.needs-processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-badge.selected {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.2s;
+        }
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+            border-color: #ffc107;
+        }
+        .btn-warning:disabled {
+            background: #6c757d;
+            border-color: #6c757d;
+            color: white;
+            cursor: not-allowed;
+        }
+        .recalc-checkbox {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+        .recalc-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-left: 4px;
+            cursor: pointer;
+        }
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .file-upload {
+            margin-bottom: 20px;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+        .file-upload:hover {
+            border-color: #007bff;
+        }
+        .file-upload.dragover {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+        .selected-files-summary {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .progress-container {
+            margin: 20px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .step-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        .step-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            width: calc(100% - 30px);
+            height: 2px;
+            background: #dee2e6;
+            z-index: 1;
+        }
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #dee2e6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+        .step-item.active .step-circle {
+            background: #007bff;
+        }
+        .step-item.completed .step-circle {
+            background: #28a745;
+        }
+        .step-item.completed:not(:last-child)::after {
+            background: #28a745;
+        }
+        .step-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .step-item.active .step-label {
+            color: #007bff;
+            font-weight: 500;
+        }
+        .step-item.completed .step-label {
+            color: #28a745;
+            font-weight: 500;
+        }
+        /* Gallery Styles */
+        .pptx-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .pptx-gallery-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .slides-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .slide-thumbnail {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .slide-thumbnail:hover {
+            background: #e9ecef;
+            border-color: #007bff;
+        }
+        .slide-number {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 4px;
+        }
+        .slide-title {
+            font-size: 11px;
+            color: #6c757d;
+            line-height: 1.2;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .no-files-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+        }
+        .no-files-message p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        /* Chat Interface Styles */
+        .chat-interface {
+            padding: 20px;
+        }
+        .chat-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            overflow: hidden;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+            line-height: 1.4;
+        }
+        .message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 4px;
+        }
+        .message.assistant {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-bottom-left-radius: 4px;
+        }
+        .message.typing {
+            font-style: italic;
+            color: #6c757d;
+        }
+        .source-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .source-header {
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #2c3e50;
+        }
+        .source-content {
+            color: #495057;
+            margin: 0;
+        }
+        .source-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        .sources-message {
+            margin-top: 12px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .source-item {
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #dee2e6;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        #chatMessageInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #dee2e6;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #chatMessageInput:focus {
+            border-color: #007bff;
+        }
+        #chatSendButton {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        #chatSendButton:hover:not(:disabled) {
+            background: #0056b3;
+        }
+        #chatSendButton:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .selected-file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        .selected-file-item button:hover {
+            background: #c82333;
+        }
+        .no-files {
+            color: #6c757d;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PowerPoint RAG System</h1>
+            <p>AI-powered document analysis and Q&A</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('workflow')">Presentations</button>
+            <button class="tab" onclick="showTab('chat')">Chat</button>
+        </div>
+
+        <!-- Workflow Tab -->
+        <div id="workflow" class="tab-content active">
+            <div class="workflow-content">
+                <div class="sidebar">
+                    <div class="section">
+                        <h3>🎯 Model Configuration</h3>
+                        <div class="model-config">
+                            <label>Vision Model:</label>
+                            <input type="text" id="visionModel" placeholder="qwen/qwen2.5-vl-7b" value="qwen/qwen2.5-vl-7b">
+                        </div>
+                        <div class="model-config">
+                            <label>Text Generation:</label>
+                            <input type="text" id="textModel" placeholder="qwen2.5-7b-instruct" value="qwen2.5-7b-instruct">
+                        </div>
+                        <div class="model-config">
+                            <label>Embeddings:</label>
+                            <input type="text" id="embeddingModel" placeholder="local" value="local">
+                        </div>
+                        <button class="btn btn-primary" id="updateModelsBtn">Update Models</button>
+                    </div>
+
+                    <div class="section">
+                        <h3>📊 Status Summary</h3>
+                        <div id="statusSummary">
+                            <p>Loading status...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="main-content">
+                    <!-- Selected Files Section -->
+                    <div class="section">
+                        <h3>📌 Selected Presentations 
+                            <button class="btn btn-success btn-sm" id="calculateEmbeddingsBtn" onclick="calculateEmbeddingsForUnready()" style="float: right; margin-left: 10px;">⚡ Calculate Embeddings</button>
+                            <button class="btn btn-warning btn-sm" id="recalculateBtn" onclick="recalculateSelected()" style="float: right; margin-top: -5px;">🔄 Recalculate</button>
+                        </h3>
+                        <p>Presentations currently selected for Q&A. These will be used to answer your questions.</p>
+                        <div id="selectedFilesGallery">
+                            <div class="no-files">No presentations selected. Choose from available presentations below.</div>
+                        </div>
+                    </div>
+
+                    <!-- Available Files Section -->
+                    <div class="section">
+                        <h3>📂 Available Presentations</h3>
+                        <p>All RAG-ready presentations that can be selected for Q&A.</p>
+                        <div id="availableFilesGallery">
+                            <div class="no-files">Loading available presentations...</div>
+                        </div>
+                    </div>
+
+                    <!-- Upload New Files Section -->
+                    <div class="section">
+                        <h3>📁 Upload New Presentations</h3>
+                        <p>Add new PowerPoint files to process and make available for Q&A.</p>
+                        <div class="file-upload" id="fileUploadArea">
+                            <div>
+                                <p>📎 Drag and drop PowerPoint files here or click to browse</p>
+                                <input type="file" id="pptxFileInput" accept=".pptx,.ppt" multiple style="display: none;">
+                                <button class="btn btn-secondary" id="browseBtn">Browse Files</button>
+                            </div>
+                        </div>
+                        <div id="uploadStatus"></div>
+                        <div id="uploadQueue" style="display: none;">
+                            <h4>Files to Upload:</h4>
+                            <div id="uploadQueueList"></div>
+                            <button class="btn btn-primary" id="uploadBtn">Upload Files</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Tab -->
+        <div id="chat" class="tab-content">
+            <div class="chat-interface">
+                <div class="chat-header">
+                    <h3>💬 Chat with Your Presentations</h3>
+                    <p>Ask questions about your PowerPoint content. Sources are color-coded for easy reference.</p>
+                </div>
+
+                <div id="chatWarning" class="status warning" style="display: none; margin: 10px; padding: 15px; border-radius: 8px; background: #fff3cd; border: 1px solid #ffeaa7; color: #856404;">
+                    <strong>⚠️ Some selected presentations are not ready for Q&A.</strong><br>
+                    <span id="unreadyCount">0</span> presentation(s) need embedding calculation before they can be used in chat.
+                    <button class="btn btn-warning btn-sm" onclick="calculateEmbeddingsFromChat()" style="margin-left: 10px;">⚡ Calculate Embeddings</button>
+                </div>
+
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message assistant">
+                            Hello! I'm here to help you find information in your PowerPoint presentations.
+                            Ask me anything about the content, and I'll search through all available slides to provide relevant answers with source citations.
+                        </div>
+                    </div>
+
+                    <div class="chat-input">
+                        <div class="input-group">
+                            <input type="text" id="chatMessageInput" placeholder="Ask a question about your presentations..." />
+                            <button id="chatSendButton">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPptxFiles = [];
+        let chatActive = false;
+        let ws = null;
+        let sourceColors = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFileStatus();
+            loadCurrentSelection();
+            setupFileUpload();
+            updateRecalculateButton(); // Initialize recalculate button
+        });
+
+        // Setup drag-and-drop file upload
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('fileUploadArea');
+            const fileInput = document.getElementById('pptxFileInput');
+            const browseBtn = document.getElementById('browseBtn');
+            const uploadQueue = document.getElementById('uploadQueue');
+            const uploadQueueList = document.getElementById('uploadQueueList');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            let selectedFiles = [];
+
+            browseBtn.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', handleFileSelection);
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                handleFileSelection({ target: { files } });
+            });
+
+            function handleFileSelection(event) {
+                const files = Array.from(event.target.files).filter(file => 
+                    file.name.endsWith('.pptx') || file.name.endsWith('.ppt')
+                );
+
+                if (files.length === 0) {
+                    showUploadStatus('Please select valid PowerPoint files (.pptx or .ppt)', 'error');
+                    return;
+                }
+
+                selectedFiles = files;
+                updateUploadQueue();
+                uploadQueue.style.display = 'block';
+            }
+
+            function updateUploadQueue() {
+                uploadQueueList.innerHTML = selectedFiles.map((file, index) => `
+                    <div class="selected-file-item">
+                        <span>📄 ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)</span>
+                        <button class="btn btn-sm btn-secondary" onclick="removeFromQueue(${index})">Remove</button>
+                    </div>
+                `).join('');
+            }
+
+            window.removeFromQueue = function(index) {
+                selectedFiles.splice(index, 1);
+                updateUploadQueue();
+                if (selectedFiles.length === 0) {
+                    uploadQueue.style.display = 'none';
+                }
+            };
+
+            uploadBtn.addEventListener('click', () => {
+                if (selectedFiles.length === 0) return;
+
+                uploadBtn.classList.add('btn-loading');
+                uploadBtn.disabled = true;
+
+                const formData = new FormData();
+                selectedFiles.forEach(file => formData.append('files', file));
+
+                fetch('/upload-pptx', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showUploadStatus('Files uploaded successfully! Files are now selected for processing.', 'success');
+                        selectedFiles = [];
+                        uploadQueue.style.display = 'none';
+                        // Refresh the file status and selections
+                        loadFileStatus();
+                        loadCurrentSelection();
+                    } else {
+                        throw new Error(data.error || 'Upload failed');
+                    }
+                })
+                .catch(error => {
+                    showUploadStatus(`Upload failed: ${error.message}`, 'error');
+                })
+                .finally(() => {
+                    uploadBtn.classList.remove('btn-loading');
+                    uploadBtn.disabled = false;
+                });
+            });
+        }
+
+        function showUploadStatus(message, type) {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function updateRecalculateButton() {
+            const checkedBoxes = document.querySelectorAll('#selectedFilesGallery input[type="checkbox"]:checked');
+            const recalculateBtn = document.getElementById('recalculateBtn');
+            const calculateBtn = document.getElementById('calculateEmbeddingsBtn');
+            
+            if (checkedBoxes.length > 0) {
+                recalculateBtn.disabled = false;
+                recalculateBtn.textContent = `🔄 Recalculate (${checkedBoxes.length})`;
+            } else {
+                recalculateBtn.disabled = true;
+                recalculateBtn.textContent = '🔄 Recalculate';
+            }
+
+            // Check if there are any unready files in selected presentations
+            const selectedCards = document.querySelectorAll('#selectedFilesGallery .pptx-card');
+            let hasUnready = false;
+            selectedCards.forEach(card => {
+                if (card.classList.contains('needs-processing') || !card.classList.contains('rag-ready')) {
+                    hasUnready = true;
+                }
+            });
+            
+            calculateBtn.style.display = hasUnready ? 'inline-block' : 'none';
+        }
+
+        // Recalculate embeddings for selected presentations
+        function recalculateSelected() {
+            const checkedBoxes = document.querySelectorAll('#selectedFilesGallery input[type="checkbox"]:checked');
+            const pathsToRecalculate = Array.from(checkedBoxes).map(cb => cb.dataset.path);
+
+            if (pathsToRecalculate.length === 0) {
+                alert('Please select at least one presentation to recalculate.');
+                return;
+            }
+
+            const recalculateBtn = document.getElementById('recalculateBtn');
+            recalculateBtn.classList.add('btn-loading');
+            recalculateBtn.disabled = true;
+            recalculateBtn.textContent = 'Processing...';
+
+            // Create a status display area
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'recalcStatus';
+            statusDiv.innerHTML = '<div class="status info">Starting recalculation...</div>';
+            document.getElementById('selectedFilesGallery').appendChild(statusDiv);
+
+            // Process each selected presentation
+            let completed = 0;
+            const total = pathsToRecalculate.length;
+
+            function processNext() {
+                if (completed >= total) {
+                    // All done
+                    statusDiv.innerHTML = '<div class="status success">Recalculation complete! Refreshing...</div>';
+                    recalculateBtn.classList.remove('btn-loading');
+                    recalculateBtn.disabled = false;
+                    recalculateBtn.textContent = '🔄 Recalculate';
+                    setTimeout(() => {
+                        loadFileStatus();
+                        statusDiv.remove();
+                    }, 2000);
+                    return;
+                }
+
+                const path = pathsToRecalculate[completed];
+                statusDiv.innerHTML = `<div class="status info">Processing ${completed + 1}/${total}: ${path.split(/[/\\]/).pop()}</div>`;
+
+                // First, extract content with force_reextract=true
+                fetch('/extract-info', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({force_reextract: true, pptx_paths: [path]})
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        statusDiv.innerHTML = `<div class="status success">Extraction complete for ${path.split(/[/\\]/).pop()}. Creating embeddings...</div>`;
+                        // Then create embeddings with force_reembed=true
+                        return fetch('/create-embeddings', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({force_reembed: true, pptx_paths: [path]})
+                        });
+                    } else {
+                        throw new Error(data.error || 'Extraction failed');
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        completed++;
+                        processNext();
+                    } else {
+                        throw new Error(data.error || 'Embedding failed');
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = `<div class="status error">Error processing ${path.split(/[/\\]/).pop()}: ${error.message}</div>`;
+                    recalculateBtn.classList.remove('btn-loading');
+                    recalculateBtn.disabled = false;
+                    recalculateBtn.textContent = '🔄 Recalculate';
+                });
+            }
+
+            processNext();
+        }
+
+        // Calculate embeddings for all unready files in selected presentations
+        function calculateEmbeddingsForUnready() {
+            const selectedCards = document.querySelectorAll('#selectedFilesGallery .pptx-card');
+            const unreadyPaths = [];
+            
+            selectedCards.forEach(card => {
+                if (card.classList.contains('needs-processing') || !card.classList.contains('rag-ready')) {
+                    unreadyPaths.push(card.dataset.path);
+                }
+            });
+
+            if (unreadyPaths.length === 0) {
+                alert('All selected presentations are already RAG ready.');
+                return;
+            }
+
+            const calculateBtn = document.getElementById('calculateEmbeddingsBtn');
+            calculateBtn.classList.add('btn-loading');
+            calculateBtn.disabled = true;
+            calculateBtn.textContent = 'Processing...';
+
+            // Create a status display area
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'calcStatus';
+            statusDiv.innerHTML = '<div class="status info">Starting embedding calculation...</div>';
+            document.getElementById('selectedFilesGallery').appendChild(statusDiv);
+
+            // Process each unready presentation
+            let completed = 0;
+            const total = unreadyPaths.length;
+
+            function processNext() {
+                if (completed >= total) {
+                    // All done
+                    statusDiv.innerHTML = '<div class="status success">All embeddings calculated! Files are now ready for Q&A.</div>';
+                    calculateBtn.classList.remove('btn-loading');
+                    calculateBtn.disabled = false;
+                    calculateBtn.textContent = '⚡ Calculate Embeddings';
+                    // Hide the button since all files are now ready
+                    calculateBtn.style.display = 'none';
+                    setTimeout(() => {
+                        loadFileStatus();
+                        statusDiv.remove();
+                    }, 2000);
+                    return;
+                }
+
+                const path = unreadyPaths[completed];
+                statusDiv.innerHTML = `<div class="status info">Processing ${completed + 1}/${total}: ${path.split(/[/\\]/).pop()}</div>`;
+
+                // First, extract content if not already extracted
+                fetch('/extract-info', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({force_reextract: false, pptx_paths: [path]})
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        statusDiv.innerHTML = `<div class="status success">Content ready for ${path.split(/[/\\]/).pop()}. Creating embeddings...</div>`;
+                        // Then create embeddings
+                        return fetch('/create-embeddings', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({force_reembed: false, pptx_paths: [path]})
+                        });
+                    } else {
+                        throw new Error(data.error || 'Extraction failed');
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        completed++;
+                        processNext();
+                    } else {
+                        throw new Error(data.error || 'Embedding failed');
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = `<div class="status error">Error processing ${path.split(/[/\\]/).pop()}: ${error.message}</div>`;
+                    calculateBtn.classList.remove('btn-loading');
+                    calculateBtn.disabled = false;
+                    calculateBtn.textContent = '⚡ Calculate Embeddings';
+                });
+            }
+
+            processNext();
+        }
+
+        // Calculate embeddings from chat warning
+        function calculateEmbeddingsFromChat() {
+            // Switch to workflow tab and trigger the calculate embeddings button
+            showTab('workflow');
+            setTimeout(() => {
+                document.getElementById('calculateEmbeddingsBtn').click();
+            }, 100);
+        }
+
+        // Check if chat is ready (all selected files are RAG ready)
+        function checkChatReadiness() {
+            fetch('/get-workflow-state')
+            .then(r => r.json())
+            .then(data => {
+                const selectedFiles = data.selected_pptx || [];
+                const allFiles = data.all_pptx_files || [];
+                
+                let unreadyCount = 0;
+                selectedFiles.forEach(path => {
+                    const fileData = allFiles.find(f => f.path === path);
+                    if (fileData && !fileData.is_rag_ready) {
+                        unreadyCount++;
+                    }
+                });
+
+                const warningDiv = document.getElementById('chatWarning');
+                const unreadyCountSpan = document.getElementById('unreadyCount');
+                
+                if (unreadyCount > 0) {
+                    unreadyCountSpan.textContent = unreadyCount;
+                    warningDiv.style.display = 'block';
+                } else {
+                    warningDiv.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error checking chat readiness:', error);
+            });
+        }
+
+        // Load current selection from backend
+        function loadCurrentSelection() {
+            fetch('/get-workflow-state')
+            .then(r => r.json())
+            .then(data => {
+                selectedPptxFiles = data.selected_pptx || [];
+                console.log('Current selected files:', selectedPptxFiles);
+                updateStatusSummary(data);
+            });
+        }
+
+        function updateStatusSummary(data) {
+            const summaryDiv = document.getElementById('statusSummary');
+            const totalFiles = data.all_pptx_files ? data.all_pptx_files.length : 0;
+            const selectedCount = selectedPptxFiles.length;
+            const readyCount = data.all_pptx_files ? data.all_pptx_files.filter(f => f.is_rag_ready).length : 0;
+
+            summaryDiv.innerHTML = `
+                <p><strong>Total Presentations:</strong> ${totalFiles}</p>
+                <p><strong>RAG Ready:</strong> ${readyCount}</p>
+                <p><strong>Currently Selected:</strong> ${selectedCount}</p>
+                ${selectedCount > 0 ? '<p><em>Ready to start chatting!</em></p>' : '<p><em>Select presentations to begin Q&A</em></p>'}
+            `;
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Initialize chat if switching to chat tab
+            if (tabName === 'chat' && !ws) {
+                initializeChat();
+            }
+
+            // Check for unready files when switching to chat
+            if (tabName === 'chat') {
+                checkChatReadiness();
+            }
+        }
+
+        function extractAndEmbed() {
+            // This function is no longer used in the new UI structure
+            console.log('extractAndEmbed called but not implemented in new UI');
+        }
+
+        // File upload is now handled by setupFileUpload()
+
+        // Model updates
+        document.getElementById('updateModelsBtn').addEventListener('click', function() {
+            const models = {
+                vision: document.getElementById('visionModel').value,
+                text_generation: document.getElementById('textModel').value,
+                embedding: document.getElementById('embeddingModel').value
+            };
+
+            fetch('/update-models', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(models)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Model configuration updated successfully', 'success');
+                } else {
+                    showStatus('Failed to update model configuration', 'error');
+                }
+            })
+            .catch(error => {
+                showStatus('Error updating model configuration', 'error');
+            });
+        });
+
+        // Load file status for Presentations tab
+        function loadFileStatus() {
+            fetch('/get-workflow-state')
+            .then(r => r.json())
+            .then(data => {
+                const selectedGallery = document.getElementById('selectedFilesGallery');
+                const availableGallery = document.getElementById('availableFilesGallery');
+                const selectedFiles = data.selected_pptx || [];
+                const allPptxFiles = data.all_pptx_files || [];
+
+                // Separate selected and available files
+                const selectedFilesData = [];
+                const availableFilesData = [];
+
+                for (const fileData of allPptxFiles) {
+                    const isSelected = selectedFiles.includes(fileData.path);
+                    
+                    if (isSelected) {
+                        selectedFilesData.push(fileData);
+                    } else {
+                        availableFilesData.push(fileData);
+                    }
+                }
+
+                // Populate selected files gallery
+                let selectedHtml = '';
+                if (selectedFilesData.length > 0) {
+                    selectedHtml = '<div class="pptx-gallery selected-files-gallery">';
+                    for (const fileData of selectedFilesData) {
+                        const classes = ['pptx-card', 'selected'];
+                        if (fileData.is_rag_ready) {
+                            classes.push('rag-ready');
+                        } else {
+                            classes.push('needs-processing');
+                        }
+                        selectedHtml += `
+                            <div class="${classes.join(' ')}" data-path="${fileData.path}">
+                                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                    <input type="checkbox" class="recalc-checkbox" id="recalc-${fileData.path.replace(/[^a-zA-Z0-9]/g, '_')}" data-path="${fileData.path}">
+                                    <label class="recalc-label" for="recalc-${fileData.path.replace(/[^a-zA-Z0-9]/g, '_')}">Re-extract & re-embed</label>
+                                </div>
+                                <div class="pptx-name">📄 ${fileData.filename}</div>
+                                <div class="pptx-info">${fileData.slides_count} slides • ${(fileData.file_size_mb || 0).toFixed(1)} MB</div>
+                                <div class="pptx-status">
+                                    ${fileData.is_rag_ready ? '<span class="status-badge rag-ready">✓ RAG Ready</span>' : '<span class="status-badge needs-processing">⚠ Needs Processing</span>'}
+                                    <span class="status-badge selected">Selected</span>
+                                    <button class="btn btn-sm btn-secondary deselect-btn" onclick="deselectFileForChat('${fileData.path}')">Deselect</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    selectedHtml += '</div>';
+                } else {
+                    selectedHtml = '<p>No presentations selected for Q&A.</p>';
+                }
+                selectedGallery.innerHTML = selectedHtml;
+
+                // Clear recalculation checkboxes
+                const recalcCheckboxes = document.querySelectorAll('#selectedFilesGallery input[type="checkbox"]');
+                recalcCheckboxes.forEach(cb => cb.checked = false);
+
+                // Update recalculate button state
+                updateRecalculateButton();
+
+                // Add event listeners to checkboxes
+                recalcCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', updateRecalculateButton);
+                });
+
+                // Populate available files gallery
+                let availableHtml = '';
+                if (availableFilesData.length > 0) {
+                    availableHtml = '<div class="pptx-gallery available-files-gallery">';
+                    for (const fileData of availableFilesData) {
+                        const classes = ['pptx-card'];
+                        if (fileData.is_rag_ready) {
+                            classes.push('rag-ready');
+                        } else {
+                            classes.push('needs-processing');
+                        }
+                        availableHtml += `
+                            <div class="${classes.join(' ')}" data-path="${fileData.path}" onclick="selectFileForChat(this)">
+                                <div class="pptx-name">📄 ${fileData.filename}</div>
+                                <div class="pptx-info">${fileData.slides_count} slides • ${(fileData.file_size_mb || 0).toFixed(1)} MB</div>
+                                <div class="pptx-status">
+                                    ${fileData.is_rag_ready ? '<span class="status-badge rag-ready">✓ RAG Ready</span>' : '<span class="status-badge needs-processing">⚠ Needs Processing</span>'}
+                                    <button class="btn btn-sm btn-primary select-btn">Select</button>
+                                    <button class="btn btn-sm btn-danger delete-btn" style="float: right;" onclick="deletePptxData('${fileData.path}', '${fileData.filename}')">Delete Data</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    availableHtml += '</div>';
+                } else {
+                    availableHtml = '<p>No presentations available.</p>';
+                }
+                availableGallery.innerHTML = availableHtml;
+
+                // Update status summary
+                updateStatusSummary(data);
+            });
+        }
+
+        // Deselect file for chat from Presentations tab
+        function deselectFileForChat(path) {
+            event.stopPropagation(); // Prevent card click
+            console.log('Deselecting file:', path);
+            
+            // Call backend to deselect the file
+            fetch('/deselect-pptx', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pptx_path: path})
+            })
+            .then(r => r.json())
+            .then(data => {
+                console.log('Deselect response:', data);
+                if (data.success) {
+                    // Reload the presentations tab and update current selection
+                    loadFileStatus();
+                    loadCurrentSelection();
+                } else {
+                    console.error('Failed to deselect file:', data.error);
+                    alert('Failed to deselect file: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error deselecting file:', error);
+                alert('Error deselecting file: ' + error.message);
+            });
+        }
+
+        // Select file for chat from Presentations tab
+        function selectFileForChat(card) {
+            const path = card.dataset.path;
+            
+            // Call backend to select the file
+            fetch('/select-pptx', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pptx_path: path})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the files tab and update current selection
+                    loadFileStatus();
+                    loadCurrentSelection();
+                } else {
+                    console.error('Failed to select file:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error selecting file:', error);
+            });
+        }
+
+        // Delete extracted data and embeddings for a PPTX file
+        function deletePptxData(path, filename) {
+            event.stopPropagation(); // Prevent card click
+            
+            if (!confirm(`Are you sure you want to delete all extracted data and embeddings for "${filename}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            // Call backend to delete the data
+            fetch('/delete-pptx-data', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pptx_path: path})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the presentations tab
+                    loadFileStatus();
+                    alert(`Successfully deleted data for ${filename}`);
+                } else {
+                    console.error('Failed to delete data:', data.error);
+                    alert('Failed to delete data: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting data:', error);
+                alert('Error deleting data: ' + error.message);
+            });
+        }
+
+        // Chat functionality
+        function initializeChat() {
+            if (ws) return;
+
+            console.log('Initializing chat WebSocket...');
+            ws = new WebSocket('ws://{{ host }}:{{ port }}/ws/chat');
+
+            ws.onopen = function() {
+                console.log('Chat WebSocket connected');
+                chatActive = true;
+                addMessage('assistant', '✅ Chat connected! You can now ask questions about your presentations.');
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleChatMessage(data);
+            };
+
+            ws.onclose = function() {
+                console.log('Chat WebSocket disconnected');
+                chatActive = false;
+                addMessage('assistant', '❌ Chat disconnected. Please refresh the page to reconnect.');
+            };
+
+            ws.onerror = function(error) {
+                console.error('Chat WebSocket error:', error);
+                addMessage('assistant', '❌ Chat connection failed. Please check if the server is running.');
+            };
+        }
+
+        function handleChatMessage(data) {
+            const messagesDiv = document.getElementById('chatMessages');
+
+            if (data.type === 'token') {
+                // Streaming token
+                let lastMessage = messagesDiv.lastElementChild;
+                if (!lastMessage || !lastMessage.classList.contains('assistant')) {
+                    lastMessage = document.createElement('div');
+                    lastMessage.className = 'message assistant';
+                    messagesDiv.appendChild(lastMessage);
+                }
+                lastMessage.innerHTML += data.content;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            } else if (data.type === 'answer_complete') {
+                // Replace the streamed content with highlighted version if available
+                let lastMessage = messagesDiv.lastElementChild;
+                if (lastMessage && lastMessage.classList.contains('assistant') && data.highlighted_answer) {
+                    lastMessage.innerHTML = data.highlighted_answer;
+                }
+
+            } else if (data.type === 'sources') {
+                // Show sources in separate message
+                if (data.sources && data.sources.length > 0) {
+                    addSources(data.sources);
+                }
+
+            } else if (data.type === 'error') {
+                addMessage('assistant', `❌ ${data.content}`);
+            }
+        }
+
+        function addSources(sources) {
+            const messagesDiv = document.getElementById('chatMessages');
+
+            // Create a separate message for sources
+            let sourcesMessage = document.createElement('div');
+            sourcesMessage.className = 'message assistant sources-message';
+
+            let sourcesHtml = '<strong>Sources:</strong><br>';
+            sources.forEach((source, index) => {
+                const color = getSourceColor(source.filename, source.slide);
+                sourcesHtml += `
+                    <div class="source-item" style="color: ${color}; border-left: 4px solid ${color}; background: ${color}10; padding: 8px; margin: 4px 0; border-radius: 4px;">
+                        📄 <strong>${source.filename}, Slide ${source.slide}</strong>
+                        <span class="source-badge" style="background: ${color}20; color: ${color}; float: right;">${(source.similarity * 100).toFixed(1)}% match</span>
+                        <br><small style="color: ${color}80;">${source.type || 'content'}</small>
+                    </div>
+                `;
+            });
+
+            sourcesMessage.innerHTML = sourcesHtml;
+            messagesDiv.appendChild(sourcesMessage);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function getSourceColor(filename, slide) {
+            const key = `${filename}_${slide}`;
+            if (!sourceColors[key]) {
+                const colors = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#6f42c1', '#fd7e14', '#20c997', '#e83e8c'];
+                sourceColors[key] = colors[Object.keys(sourceColors).length % colors.length];
+            }
+            return sourceColors[key];
+        }
+
+        function addMessage(sender, content) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.innerHTML = content;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Chat input handling
+        document.getElementById('chatSendButton').addEventListener('click', sendChatMessage);
+        document.getElementById('chatMessageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+
+        function sendChatMessage() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                if (!ws) {
+                    // Try to initialize chat if not already done
+                    initializeChat();
+                    addMessage('assistant', '🔄 Connecting to chat... Please try again in a moment.');
+                } else {
+                    addMessage('assistant', '❌ Chat not connected. Please wait for connection to establish.');
+                }
+                return;
+            }
+
+            const input = document.getElementById('chatMessageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage('user', message);
+
+            // Clear input
+            input.value = '';
+
+            // Send to server
+            ws.send(JSON.stringify({query: message}));
+        }
+
+        function showStatus(message, type = 'info') {
+            // Simple status display - could be enhanced
+            console.log(`${type}: ${message}`);
+        }
+
+        // WebSocket
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            handleWebSocketMessage(data);
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFileStatus();
+            showTab('workflow'); // Start with workflow tab
+        });
+
+    </script>
+</body>
+</html>
