@@ -5,31 +5,150 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PowerPoint RAG System</title>
     <style>
+        :root {
+            /* Dark theme (default) */
+            --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --bg-secondary: #2d3748;
+            --bg-tertiary: #1a202c;
+            --bg-accent: #2d3748;
+            --text-primary: #cccccc;
+            --text-secondary: #a0aec0;
+            --text-light: #e2e8f0;
+            --border-color: #4a5568;
+            --btn-primary: #3182ce;
+            --btn-primary-hover: #2c5282;
+            --btn-success: #38a169;
+            --btn-success-hover: #2f855a;
+            --btn-danger: #e53e3e;
+            --btn-danger-hover: #c53030;
+            --btn-secondary: #718096;
+            --btn-secondary-hover: #4a5568;
+            --btn-warning: #d69e2e;
+            --status-success-bg: #2f855a;
+            --status-success-text: #c6f6d5;
+            --status-error-bg: #c53030;
+            --status-error-text: #fed7d7;
+            --status-info-bg: #3182ce;
+            --status-info-text: #bee3f8;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            --input-border: #4a5568;
+            --input-focus: #3182ce;
+            --status-extracted-bg: #4a5568;
+            --status-extracted-text: #fbbf24;
+            --status-selected-bg: #2b6cb0;
+            --status-selected-text: #bee3f8;
+            --card-extracted-bg: #4a5568;
+            --card-embedded-bg: #2b6cb0;
+            --card-missing-bg: #c53030;
+            --card-needs-bg: #4a5568;
+            --slide-name-color: #333333;
+        }
+
+        [data-theme="light"] {
+            /* Light theme */
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: white;
+            --bg-accent: #2c3e50;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --text-light: white;
+            --border-color: #dee2e6;
+            --btn-primary: #007bff;
+            --btn-primary-hover: #0056b3;
+            --btn-success: #28a745;
+            --btn-success-hover: #1e7e34;
+            --btn-danger: #dc3545;
+            --btn-danger-hover: #c82333;
+            --btn-secondary: #6c757d;
+            --btn-secondary-hover: #545b62;
+            --btn-warning: #ffc107;
+            --status-success-bg: #d4edda;
+            --status-success-text: #155724;
+            --status-error-bg: #f8d7da;
+            --status-error-text: #721c24;
+            --status-info-bg: #d1ecf1;
+            --status-info-text: #0c5460;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            --input-border: #dee2e6;
+            --input-focus: #007bff;
+            --status-extracted-bg: #fff3cd;
+            --status-extracted-text: #856404;
+            --status-selected-bg: #cce5ff;
+            --status-selected-text: #004085;
+            --card-extracted-bg: #fffbf0;
+            --card-embedded-bg: #cce5ff;
+            --card-missing-bg: #fff5f5;
+            --card-needs-bg: #fffbf0;
+            --slide-name-color: #2c3e50;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-primary);
             min-height: 100vh;
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
         }
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: white;
+            background: var(--bg-tertiary);
             border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: var(--card-shadow);
             overflow: hidden;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
         }
         .header {
-            background: #2c3e50;
-            color: white;
+            background: var(--bg-accent);
+            color: var(--text-light);
             padding: 20px;
             text-align: center;
+            position: relative;
+        }
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 30px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .theme-toggle:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-color: var(--btn-primary);
+        }
+        .theme-slider {
+            width: 22px;
+            height: 22px;
+            background: var(--btn-primary);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transform: translateX(30px); /* default for dark */
+        }
+        .theme-toggle[data-theme="light"] .theme-slider {
+            transform: translateX(0);
         }
         .tabs {
             display: flex;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
         }
         .tab {
             padding: 15px 30px;
@@ -40,14 +159,16 @@
             font-weight: 500;
             transition: all 0.2s;
             position: relative;
+            color: var(--text-primary);
         }
         .tab.active {
-            background: white;
-            color: #007bff;
-            border-bottom: 3px solid #007bff;
+            background: var(--bg-tertiary);
+            color: var(--btn-primary);
+            border-bottom: 3px solid var(--btn-primary);
         }
         .tab:hover:not(.active) {
-            background: #e9ecef;
+            background: var(--bg-secondary);
+            opacity: 0.8;
         }
         .tab-content {
             display: none;
@@ -61,8 +182,8 @@
         }
         .sidebar {
             width: 350px;
-            background: #f8f9fa;
-            border-right: 1px solid #dee2e6;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
             padding: 20px;
         }
         .main-content {
@@ -72,15 +193,65 @@
         .section {
             margin-bottom: 30px;
             padding: 20px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            background: white;
+            background: var(--bg-tertiary);
         }
         .section h3 {
             margin-top: 0;
-            color: #2c3e50;
-            border-bottom: 2px solid #007bff;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--btn-primary);
             padding-bottom: 10px;
+        }
+        .model-config {
+            margin-bottom: 20px;
+        }
+        .model-config label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+        .model-config input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .model-config input:focus {
+            border-color: var(--input-focus);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+        }
+        .model-config small {
+            display: block;
+            margin-top: 5px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        .links-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .link-item {
+            display: inline-block;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s;
+            border: 1px solid var(--border-color);
+        }
+        .link-item:hover {
+            background: var(--btn-primary);
+            color: white;
+            border-color: var(--btn-primary);
         }
         .pptx-grid {
             display: grid;
@@ -89,55 +260,56 @@
             max-height: 400px;
             overflow-y: auto;
             padding: 10px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
         }
         .pptx-card {
-            background: white;
-            border: 2px solid #dee2e6;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             padding: 15px;
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
+            color: var(--text-primary);
         }
         .pptx-card:hover {
-            border-color: #007bff;
+            border-color: var(--btn-primary);
             box-shadow: 0 2px 8px rgba(0,123,255,0.2);
         }
         .pptx-card.selected {
-            border-color: #007bff;
-            background: #f8f9ff;
+            border-color: var(--btn-primary);
+            background: var(--bg-secondary);
         }
         .pptx-card.extracted {
             border-color: #ffc107;
-            background: #fffbf0;
+            background: var(--card-extracted-bg);
         }
         .pptx-card.embedded {
-            border-color: #28a745;
-            background: #f8fff8;
+            border-color: #007bff;
+            background: var(--card-embedded-bg);
         }
         .pptx-card.rag-ready {
-            border-color: #28a745;
-            background: #f8fff8;
+            border-color: #007bff;
+            background: var(--card-embedded-bg);
         }
         .pptx-card.missing-embeddings {
             border-color: #dc3545;
-            background: #fff5f5;
+            background: var(--card-missing-bg);
         }
         .pptx-card.needs-processing {
             border-color: #ffc107;
-            background: #fffbf0;
+            background: var(--card-needs-bg);
         }
         .pptx-name {
             font-weight: bold;
             margin-bottom: 8px;
-            color: #2c3e50;
+            color: var(--slide-name-color);
         }
         .pptx-info {
             font-size: 12px;
-            color: #6c757d;
+            color: var(--text-secondary);
             margin-bottom: 8px;
         }
         .pptx-status {
@@ -152,28 +324,25 @@
             font-weight: 500;
         }
         .status-badge.extracted {
-            background: #fff3cd;
-            color: #856404;
+            background: var(--status-extracted-bg);
+            color: var(--status-extracted-text);
         }
-        .status-badge.embedded {
-            background: #d4edda;
-            color: #155724;
-        }
+        .status-badge.embedded,
         .status-badge.rag-ready {
-            background: #d4edda;
-            color: #155724;
+            background: var(--status-success-bg);
+            color: var(--status-success-text);
         }
         .status-badge.missing-embeddings {
-            background: #f8d7da;
-            color: #721c24;
+            background: var(--status-error-bg);
+            color: var(--status-error-text);
         }
         .status-badge.needs-processing {
-            background: #fff3cd;
-            color: #856404;
+            background: var(--status-extracted-bg);
+            color: var(--status-extracted-text);
         }
         .status-badge.selected {
-            background: #cce5ff;
-            color: #004085;
+            background: var(--status-selected-bg);
+            color: var(--status-selected-text);
         }
         .btn {
             padding: 10px 20px;
@@ -190,37 +359,37 @@
             margin: 2px;
         }
         .btn-primary {
-            background: #007bff;
+            background: var(--btn-primary);
             color: white;
         }
         .btn-primary:hover {
-            background: #0056b3;
+            background: var(--btn-primary-hover);
         }
         .btn-success {
-            background: #28a745;
+            background: var(--btn-success);
             color: white;
         }
         .btn-success:hover {
-            background: #1e7e34;
+            background: var(--btn-success-hover);
         }
         .btn-danger {
-            background: #dc3545;
+            background: var(--btn-danger);
             color: white;
         }
         .btn-danger:hover {
-            background: #c82333;
+            background: var(--btn-danger-hover);
         }
         .btn-secondary {
-            background: #6c757d;
+            background: var(--btn-secondary);
             color: white;
         }
         .btn-secondary:hover {
-            background: #545b62;
+            background: var(--btn-secondary-hover);
         }
         .btn-warning {
-            background: #ffc107;
+            background: var(--btn-warning);
             color: #212529;
-            border-color: #ffc107;
+            border-color: var(--btn-warning);
         }
         .btn-warning:disabled {
             background: #6c757d;
@@ -234,7 +403,7 @@
         }
         .recalc-label {
             font-size: 12px;
-            color: #6c757d;
+            color: #333333;
             margin-left: 4px;
             cursor: pointer;
         }
@@ -261,21 +430,22 @@
         }
         .file-upload {
             margin-bottom: 20px;
-            border: 2px dashed #dee2e6;
+            border: 2px dashed var(--border-color);
             border-radius: 8px;
             padding: 20px;
             text-align: center;
             transition: border-color 0.2s;
+            background: var(--bg-secondary);
         }
         .file-upload:hover {
-            border-color: #007bff;
+            border-color: var(--btn-primary);
         }
         .file-upload.dragover {
-            border-color: #007bff;
-            background: #f8f9ff;
+            border-color: var(--btn-primary);
+            background: var(--bg-tertiary);
         }
         .selected-files-summary {
-            background: #e9ecef;
+            background: var(--bg-secondary);
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
@@ -289,13 +459,13 @@
         .progress-bar {
             width: 100%;
             height: 20px;
-            background: #e9ecef;
+            background: var(--bg-secondary);
             border-radius: 10px;
             overflow: hidden;
         }
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #28a745, #20c997);
+            background: linear-gradient(90deg, var(--btn-success), #20c997);
             transition: width 0.3s ease;
         }
         .step-indicator {
@@ -361,8 +531,8 @@
             margin-bottom: 20px;
         }
         .pptx-gallery-item {
-            background: white;
-            border: 1px solid #dee2e6;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -376,27 +546,28 @@
             overflow-y: auto;
         }
         .slide-thumbnail {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 8px;
             text-align: center;
             font-size: 12px;
             cursor: pointer;
             transition: all 0.2s;
+            color: var(--text-primary);
         }
         .slide-thumbnail:hover {
-            background: #e9ecef;
-            border-color: #007bff;
+            background: var(--bg-tertiary);
+            border-color: var(--btn-primary);
         }
         .slide-number {
             font-weight: bold;
-            color: #007bff;
+            color: var(--btn-primary);
             margin-bottom: 4px;
         }
         .slide-title {
             font-size: 11px;
-            color: #6c757d;
+            color: var(--text-secondary);
             line-height: 1.2;
             overflow: hidden;
             display: -webkit-box;
@@ -406,10 +577,10 @@
         .no-files-message {
             text-align: center;
             padding: 40px 20px;
-            color: #6c757d;
-            background: #f8f9fa;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
             border-radius: 8px;
-            border: 2px dashed #dee2e6;
+            border: 2px dashed var(--border-color);
         }
         .no-files-message p {
             margin: 10px 0;
@@ -427,16 +598,16 @@
             display: flex;
             flex-direction: column;
             height: 600px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            background: white;
+            background: var(--bg-tertiary);
             overflow: hidden;
         }
         .chat-messages {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
         }
         .message {
             margin-bottom: 15px;
@@ -446,24 +617,25 @@
             line-height: 1.4;
         }
         .message.user {
-            background: #007bff;
+            background: var(--btn-primary);
             color: white;
             margin-left: auto;
             text-align: right;
             border-bottom-right-radius: 4px;
         }
         .message.assistant {
-            background: white;
-            border: 1px solid #dee2e6;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
             border-bottom-left-radius: 4px;
+            color: var(--text-primary);
         }
         .message.typing {
             font-style: italic;
-            color: #6c757d;
+            color: var(--text-secondary);
         }
         .source-block {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 10px;
             margin: 8px 0;
@@ -472,10 +644,10 @@
         .source-header {
             font-weight: bold;
             margin-bottom: 4px;
-            color: #2c3e50;
+            color: var(--text-primary);
         }
         .source-content {
-            color: #495057;
+            color: var(--text-secondary);
             margin: 0;
         }
         .source-badge {
@@ -489,9 +661,9 @@
         .sources-message {
             margin-top: 12px;
             padding: 16px;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             border-radius: 8px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--border-color);
         }
         .source-item {
             margin: 8px 0;
@@ -501,8 +673,8 @@
         }
         .chat-input {
             padding: 20px;
-            background: white;
-            border-top: 1px solid #dee2e6;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-color);
         }
         .input-group {
             display: flex;
@@ -511,18 +683,20 @@
         #chatMessageInput {
             flex: 1;
             padding: 12px 16px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--input-border);
             border-radius: 25px;
             font-size: 16px;
             outline: none;
             transition: border-color 0.2s;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
         }
         #chatMessageInput:focus {
-            border-color: #007bff;
+            border-color: var(--input-focus);
         }
         #chatSendButton {
             padding: 12px 24px;
-            background: #007bff;
+            background: var(--btn-primary);
             color: white;
             border: none;
             border-radius: 25px;
@@ -531,10 +705,10 @@
             transition: background 0.2s;
         }
         #chatSendButton:hover:not(:disabled) {
-            background: #0056b3;
+            background: var(--btn-primary-hover);
         }
         #chatSendButton:disabled {
-            background: #6c757d;
+            background: var(--btn-secondary);
             cursor: not-allowed;
         }
         .selected-file-item {
@@ -543,15 +717,15 @@
             align-items: center;
             padding: 8px 12px;
             margin: 4px 0;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             border-radius: 4px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--border-color);
         }
         .selected-file-item button:hover {
-            background: #c82333;
+            background: var(--btn-danger-hover);
         }
         .no-files {
-            color: #6c757d;
+            color: var(--text-secondary);
             font-style: italic;
             text-align: center;
             padding: 20px;
@@ -563,25 +737,28 @@
             font-weight: bold;
         }
         .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: var(--status-success-bg);
+            color: var(--status-success-text);
+            border: 1px solid var(--status-success-bg);
         }
         .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: var(--status-error-bg);
+            color: var(--status-error-text);
+            border: 1px solid var(--status-error-bg);
         }
         .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
+            background: var(--status-info-bg);
+            color: var(--status-info-text);
+            border: 1px solid var(--status-info-bg);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+                <div class="theme-slider">🌙</div>
+            </button>
             <h1>PowerPoint RAG System</h1>
             <p>AI-powered document analysis and Q&A</p>
         </div>
@@ -597,25 +774,39 @@
                 <div class="sidebar">
                     <div class="section">
                         <h3>🎯 Model Configuration</h3>
+                        <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">Configure the AI models used for vision analysis, text generation, and embeddings.</p>
                         <div class="model-config">
-                            <label>Vision Model:</label>
+                            <label for="visionModel">Vision Model:</label>
                             <input type="text" id="visionModel" placeholder="qwen/qwen2.5-vl-7b" value="qwen/qwen2.5-vl-7b">
+                            <small>Model for analyzing images, diagrams, and visual content in slides.</small>
                         </div>
                         <div class="model-config">
-                            <label>Text Generation:</label>
+                            <label for="textModel">Text Generation:</label>
                             <input type="text" id="textModel" placeholder="qwen2.5-7b-instruct" value="qwen2.5-7b-instruct">
+                            <small>Model for generating responses, summaries, and text-based Q&A.</small>
                         </div>
                         <div class="model-config">
-                            <label>Embeddings:</label>
+                            <label for="embeddingModel">Embeddings:</label>
                             <input type="text" id="embeddingModel" placeholder="local" value="local">
+                            <small>Model for creating vector embeddings from text (use 'local' for built-in or specify remote model).</small>
                         </div>
-                        <button class="btn btn-primary" id="updateModelsBtn">Update Models</button>
+                        <button class="btn btn-primary" id="updateModelsBtn" style="width: 100%; margin-top: 10px;">🔄 Update Models</button>
                     </div>
 
                     <div class="section">
                         <h3>📊 Status Summary</h3>
                         <div id="statusSummary">
                             <p>Loading status...</p>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>🔗 Links</h3>
+                        <div class="links-list">
+                            <a href="https://github.com/devMuniz02/" target="_blank" class="link-item">🐙 GitHub</a>
+                            <a href="https://www.linkedin.com/in/devmuniz" target="_blank" class="link-item">💼 LinkedIn</a>
+                            <a href="https://huggingface.co/manu02" target="_blank" class="link-item">🤗 Hugging Face</a>
+                            <a href="https://devmuniz02.github.io/" target="_blank" class="link-item">🌐 Portfolio</a>
                         </div>
                     </div>
                 </div>
@@ -705,10 +896,12 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
             loadFileStatus();
             loadCurrentSelection();
             setupFileUpload();
             updateRecalculateButton(); // Initialize recalculate button
+            showTab('workflow'); // Start with workflow tab
         });
 
         // Setup drag-and-drop file upload
@@ -1021,6 +1214,57 @@
             }, 100);
         }
 
+        // Re-extract and re-embed a single presentation
+        function reextractPresentation(path, filename) {
+            if (!confirm(`Re-extract and re-embed "${filename}"? This will reprocess the presentation.`)) {
+                return;
+            }
+
+            // Find the card and add loading state
+            const card = document.querySelector(`[data-path="${path}"]`);
+            if (card) {
+                card.style.opacity = '0.6';
+                card.style.pointerEvents = 'none';
+            }
+
+            fetch('/extract-info', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({force_reextract: true, pptx_paths: [path]})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    return fetch('/calculate-embeddings', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({pptx_paths: [path]})
+                    });
+                } else {
+                    throw new Error('Extraction failed');
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus(`Successfully reprocessed "${filename}"`, 'success');
+                    loadFileStatus(); // Refresh the UI
+                } else {
+                    throw new Error('Embedding calculation failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error reprocessing presentation:', error);
+                showStatus(`Failed to reprocess "${filename}": ${error.message}`, 'error');
+            })
+            .finally(() => {
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                }
+            });
+        }
+
         // Check if chat is ready (all selected files are RAG ready)
         function checkChatReadiness() {
             fetch('/get-workflow-state')
@@ -1181,6 +1425,7 @@
                                 <div class="pptx-status">
                                     ${fileData.is_rag_ready ? '<span class="status-badge rag-ready">✓ RAG Ready</span>' : '<span class="status-badge needs-processing">⚠ Needs Processing</span>'}
                                     <span class="status-badge selected">Selected</span>
+                                    <button class="btn btn-sm btn-warning" onclick="reextractPresentation('${fileData.path}', '${fileData.filename}')">🔄</button>
                                     <button class="btn btn-sm btn-secondary deselect-btn" onclick="deselectFileForChat('${fileData.path}')">Deselect</button>
                                 </div>
                             </div>
@@ -1470,11 +1715,61 @@
             handleWebSocketMessage(data);
         };
 
+        // Theme toggle functionality
+        function initializeTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = 'dark'; // Always start on dark
+            
+            // Set initial theme
+            setTheme(currentTheme);
+            
+            // Theme toggle event listener
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                setTheme(newTheme);
+            });
+        }
+
+        function setTheme(theme) {
+            const themeToggle = document.getElementById('themeToggle');
+            
+            // Set theme on document
+            if (theme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+            
+            // Set theme on toggle button
+            if (theme === 'light') {
+                themeToggle.setAttribute('data-theme', 'light');
+            } else {
+                themeToggle.removeAttribute('data-theme');
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('theme', theme);
+            
+            // Update slider icon
+            updateThemeSlider(theme);
+        }
+
+        function updateThemeSlider(theme) {
+            const themeToggle = document.getElementById('themeToggle');
+            const slider = themeToggle.querySelector('.theme-slider');
+            
+            if (theme === 'dark') {
+                slider.textContent = '🌙';
+                themeToggle.title = 'Switch to Light Mode';
+            } else {
+                slider.textContent = '☀️';
+                themeToggle.title = 'Switch to Dark Mode';
+            }
+        }
+
         // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadFileStatus();
-            showTab('workflow'); // Start with workflow tab
-        });
+        // (Moved to the first DOMContentLoaded listener above)
 
     </script>
 </body>

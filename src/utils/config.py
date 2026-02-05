@@ -49,6 +49,14 @@ class TTSConfig(BaseModel):
     volume: str = Field(default=rag_config.get("tts", {}).get("volume", "+0%"))  # Speech volume
 
 
+class WebInterfaceConfig(BaseModel):
+    """Configuration for web interface."""
+
+    host: str = Field(default=rag_config.get("web_interface", {}).get("host", "localhost"))
+    port: int = Field(default=rag_config.get("web_interface", {}).get("port", 8000))
+    reload: bool = Field(default=rag_config.get("web_interface", {}).get("reload", True))
+
+
 class ProcessingConfig(BaseModel):
     """Configuration for slide processing."""
 
@@ -70,6 +78,7 @@ class Config(BaseModel):
     lm_studio: LMStudioConfig = Field(default_factory=LMStudioConfig)
     tts: TTSConfig = Field(default_factory=TTSConfig)
     processing: ProcessingConfig = Field(default_factory=ProcessingConfig)
+    web_interface: WebInterfaceConfig = Field(default_factory=WebInterfaceConfig)
 
 
 # Global config instance

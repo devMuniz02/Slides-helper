@@ -305,6 +305,13 @@ See `docs/RAG_CONFIG_README.md` for detailed configuration options.
 4. Add tests if applicable
 5. Submit a pull request
 
+## Links
+
+- **GitHub:** [https://github.com/devMuniz02/](https://github.com/devMuniz02/)
+- **LinkedIn:** [https://www.linkedin.com/in/devmuniz](https://www.linkedin.com/in/devmuniz)
+- **Hugging Face:** [https://huggingface.co/manu02](https://huggingface.co/manu02)
+- **Portfolio:** [https://devmuniz02.github.io/](https://devmuniz02.github.io/)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

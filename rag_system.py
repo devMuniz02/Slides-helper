@@ -628,9 +628,9 @@ async def get_workflow_interface(request: Request):
             "is_available": is_available
         })
     
-    web_config = config.get("web_interface", {})
-    host = web_config.get("host", "localhost")
-    port = web_config.get("port", 8000)
+    web_config = config.web_interface
+    host = web_config.host
+    port = web_config.port
     
     if enable_logging:
         print(f"✅ Loaded {len(pptx_files)} PPTX files for workflow interface")
@@ -1695,9 +1695,9 @@ def main():
             sys.exit(1)
 
     # Get web interface config
-    web_config = config.get("web_interface", {})
-    host = web_config.get("host", "localhost")
-    port = web_config.get("port", 8000)
+    web_config = config.web_interface
+    host = web_config.host
+    port = web_config.port
 
     if args.chat:
         # Create HTML template
